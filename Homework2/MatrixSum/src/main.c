@@ -6,7 +6,8 @@
 #define MAXSIZE 10000  /* maximum matrix size */
 #define MAXWORKERS 8   /* maximum number of workers */
 #define RUNS 5  // Number of times each configuration runs for median timing
-
+double start_time, end_time;
+double serialStart_time, serialEnd_time;
 double calculateMedian(double times[], int count);
 
 /* Benchmarking Setup */
@@ -51,33 +52,35 @@ int main() {
             }
 
             // Variables for min/max calculations
-            int globalMaxRow, globalMaxColumn, globalMinRow, globalMinColumn;
+            int MaxRow, MaxColumn, MinRow, MinColumn;
 
             // Measure serial execution time
             for (int r = 0; r < RUNS; r++) {
                 int total = 0;
-                globalMaxRow = 0;
-                globalMaxColumn = 0;
-                globalMinRow = 0;
-                globalMinColumn = 0;
+                MaxRow = 0;
+                MaxColumn = 0;
+                MinRow = 0;
+                MinColumn = 0;
 
-                double start = omp_get_wtime();
+                serialStart_time = omp_get_wtime();
 
                 for (int i = 0; i < size; i++) {
                     for (int j = 0; j < size; j++) {
                         total += matrix[i][j];
-                        if (matrix[i][j] > matrix[globalMaxRow][globalMaxColumn]) {
-                            globalMaxRow = i;
-                            globalMaxColumn = j;
+                        if (matrix[i][j] > matrix[MaxRow][MaxColumn]) {
+                            MaxRow = i;
+                            MaxColumn = j;
                         }
-                        if (matrix[i][j] < matrix[globalMinRow][globalMinColumn]) {
-                            globalMinRow = i;
-                            globalMinColumn = j;
+                        if (matrix[i][j] < matrix[MinRow][MinColumn]) {
+                            MinRow = i;
+                            MinColumn = j;
                         }
                     }
                 }
 
-                serialTimes[r] = omp_get_wtime() - start;
+                serialEnd_time = omp_get_wtime();
+
+                serialTimes[r] = serialEnd_time - serialStart_time;
             }
             double serialMedian = calculateMedian(serialTimes, RUNS);
 
@@ -85,12 +88,12 @@ int main() {
             omp_set_num_threads(threads);
             for (int r = 0; r < RUNS; r++) {
                 int total = 0;
-                globalMaxRow = 0;
-                globalMaxColumn = 0;
-                globalMinRow = 0;
-                globalMinColumn = 0;
+                int globalMaxRow = 0;
+                int globalMaxColumn = 0;
+                int globalMinRow = 0;
+                int globalMinColumn = 0;
 
-                double start = omp_get_wtime();
+                start_time = omp_get_wtime();
 
                 #pragma omp parallel shared(globalMaxRow, globalMaxColumn, globalMinRow, globalMinColumn)
                 {
@@ -127,7 +130,9 @@ int main() {
                     }
                 }
 
-                parallelTimes[r] = omp_get_wtime() - start;
+                end_time = omp_get_wtime();
+
+                parallelTimes[r] = end_time - start_time;
             }
             double parallelMedian = calculateMedian(parallelTimes, RUNS);
             double speedup = (parallelMedian > 0) ? serialMedian / parallelMedian : 0;
