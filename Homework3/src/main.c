@@ -130,7 +130,44 @@ void *Men(void *arg)
 }
 
 
-int main ()
+int main()
 {
+	while (numberOfMen < 1 || numberOfMen > MAXMEN)
+	{
+		printf("Enter the number of men: (max %d) ", MAXMEN);
+		scanf("%d", &numberOfMen);
+	}
+	while (numberOfWomen <= 0 || numberOfWomen > MAXWOMEN)
+	{
+		printf("Enter the number of women: (max %d) ", MAXWOMEN);
+		scanf("%d", &numberOfWomen);
+	}
+	while (numberOfVisits <= 0 || numberOfVisits > MAXVISITS)
+	{
+		printf("Enter the number of visits per person: (max %d) ", MAXVISITS);
+		scanf("%d", &numberOfVisits);
+	}
+	printf("\n");
+    
+    sem_init(&bathroom_access, 0, 1);
+    sem_init(&men_queue, 0, 0);
+    sem_init(&women_queue, 0, 0);
 
+	pthread_t threads_men[numberOfMen], threads_women[numberOfWomen];
+	int i;
+	for (i = 0; i < numberOfMen; i++)
+		pthread_create(&threads_men[i], NULL, Men, (void *)i);
+	for (i = 0; i < numberOfWomen; i++)
+		pthread_create(&threads_women[i], NULL, Women, (void *)i);
+
+	for (i = 0; i < numberOfMen; i++)
+		pthread_join(threads_men[i], NULL);
+	for (i = 0; i < numberOfWomen; i++)
+		pthread_join(threads_women[i], NULL);
+
+    sem_destroy(&bathroom_access);
+    sem_destroy(&men_queue);
+    sem_destroy(&women_queue);
+        
+    
 }
