@@ -31,6 +31,31 @@ int numberOfVisitis = 0;
 
 void *Women(void *arg)
 {
+    long id = (int)arg;
+    for (int i = 0; i < numberOfVisitis; i++) 
+    {
+        /* Do different things before entering*/
+        usleep((rand() % 4000) * 1000);
+
+        /* Check if the bathroom is occupied; if so, wait */
+        sem_p(bathroom_access);
+        if (current_men_in_bath > 0 || women_exit_phase) 
+        {
+            waiting_women++;
+            sem_v(bathroom_access);
+            sem_p(women_queue);
+        }
+        current_women_in_bath++;
+        if (waiting_women > 0)
+        {
+            waiting_women--;
+            sem_v(women_queue);
+        }
+        else
+        {
+            sem_v(bathroom_access);
+        }
+    }
 
 }
 
@@ -41,5 +66,5 @@ void *Men(void *arg)
 
 int main ()
 {
-    
+
 }
