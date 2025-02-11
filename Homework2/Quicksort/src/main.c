@@ -138,10 +138,10 @@ int main() {
             for (int r = 0; r < RUNS; r++) {
                 for (int i = 0; i < size; i++) array[i] = copy[i];
                 double start = omp_get_wtime();
-                #pragma omp parallel
+                #pragma omp parallel // create the tasks inside a parallel region, without it no tasks would execute in paralell
                 {
-                    #pragma omp single nowait
-                    parallelQuicksort(0, size - 1, array);
+                    #pragma omp single nowait // ensures only one thread starts the recursive parallelQuicksort(),
+                    parallelQuicksort(0, size - 1, array); // but doesnt force others to wait, threads would have to pause if that were the case. 
                 }
                 parallelTimes[r] = omp_get_wtime() - start;
             }

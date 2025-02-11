@@ -85,7 +85,7 @@ int main() {
             double serialMedian = calculateMedian(serialTimes, RUNS);
 
             // Measure parallel execution time
-            omp_set_num_threads(threads);
+            omp_set_num_threads(threads); //set number of threads, declared threadsCounts[] array (1,2,4,8)
             for (int r = 0; r < RUNS; r++) {
                 int total = 0;
                 int globalMaxRow = 0;
@@ -102,9 +102,9 @@ int main() {
                     int localMinRow = 0;
                     int localMinColumn = 0; 
 
-                    #pragma omp for reduction(+:total)
-                    for (int i = 0; i < size; i++) {
-                        for (int j = 0; j < size; j++) {
+                    #pragma omp for reduction(+:total) // Split the loop iterations among multiple threads so the run in parallel
+                    for (int i = 0; i < size; i++) { // reduction(+:total) ensures each thread calculates its own local sum of total
+                        for (int j = 0; j < size; j++) { // prevents racing condition
                             total += matrix[i][j];
                             if (matrix[i][j] > matrix[localMaxRow][localMaxColumn]) {
                                 localMaxRow = i;
@@ -117,8 +117,8 @@ int main() {
                         }
                     }
 
-                    #pragma omp critical
-                    {
+                    #pragma omp critical // only one thread at a time executes this, 
+                    { // to ensure global max/min values updates safely
                         if (matrix[localMaxRow][localMaxColumn] > matrix[globalMaxRow][globalMaxColumn]) {
                             globalMaxRow = localMaxRow;
                             globalMaxColumn = localMaxColumn;
