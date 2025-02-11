@@ -84,10 +84,51 @@ void *Women(void *arg)
     pthread_exit(NULL);
 }
 
-void *Men(void *arg) 
+void *Men(void *arg)
 {
+    long id = (long) arg;
+    int i;
+    for(i = 0; i < numberOfVisits; i++){
 
+        usleep((rand() % 4000) * 1000);
+
+        sem_wait(bathroom_access);
+        if(current_women_in_bath > 0 || men_exit_phase){
+            waiting_men += 1;
+            sem_post(bathroom_access);
+            sem_wait(men_queue);
+        }
+        current_men_in_bath++;
+        if(waiting_men >0){
+            waiting_men--;
+            sem_post(men_queue);
+        } else{
+            sem_post(bathroom_access);  
+        }
+
+        printf( "a MAN enters the bathroom. Visit number: ","%d\n", i+1);
+        
+        /* do something else after they've been to the bathroom*/
+        usleep((rand() % 3000) * 1000);
+
+        sem_wait(bathroom_access);
+        current_men_in_bath--;
+        men_exit_phase = true;
+
+        if(current_men_in_bath == 0 ) men_exit_phase = false;
+
+        if(current_men_in_bath == 0 && waiting_women >0){
+            waiting_women--;
+            sem_post(women_queue);
+        } else {
+            sem_post(bathroom_access);
+        }
+
+
+    }
+    pthread_exit(NULL);
 }
+
 
 int main ()
 {
