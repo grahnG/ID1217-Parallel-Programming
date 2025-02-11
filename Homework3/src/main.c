@@ -23,16 +23,16 @@ int waiting_women = 0;
 int waiting_men = 0;
 
 bool women_exit_phase;
-bool mean_exit_phase;
+bool men_exit_phase;
 
 int numberOfWomen = 0;
 int numberOfMen = 0;
-int numberOfVisitis = 0;
+int numberOfVisits = 0;
 
 void *Women(void *arg)
 {
     long id = (int)arg;
-    for (int i = 0; i < numberOfVisitis; i++) 
+    for (int i = 0; i < numberOfVisits; i++) 
     {
         /* Do different things before entering*/
         usleep((rand() % 4000) * 1000);
@@ -56,7 +56,6 @@ void *Women(void *arg)
             sem_v(bathroom_access);
         }
     }
-
 }
 
 void *Men(void *arg) 
