@@ -23,15 +23,27 @@ int waiting_women = 0;
 int waiting_men = 0;
 
 bool women_exit_phase;
-bool mean_exit_phase;
+bool men_exit_phase;
 
 int numberOfWomen = 0;
 int numberOfMen = 0;
-int numberOfVisitis = 0;
+int numberOfVisits = 0;
 
 void *Women(void *arg)
 {
+    long id = (long) arg;
+    int i;
+    for(i = 0; i < numberOfVisits; i++){
 
+        usleep((rand() % 4000) * 1000);
+
+        sem_wait(bathroom_access);
+
+
+        if(current_men_in_bath > 0 || men_exit_phase){
+
+        }
+    }
 }
 
 void *Men(void *arg) 
