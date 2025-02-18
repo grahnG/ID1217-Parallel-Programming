@@ -65,6 +65,8 @@ void *Women(void *arg)
         /* After finished bathroom visit */
         sem_wait(&bathroom_access);
         current_women_in_bath--;
+        printf("woman number %ld leaves bathroom\n", id);
+
 
         /* Make sure men will enter after a women went to the bathroom */
         women_exit_phase = true;
@@ -115,6 +117,7 @@ void *Men(void *arg)
 
         sem_wait(&bathroom_access);
         current_men_in_bath--;
+        printf("man number %ld leaves bathroom\n", id);
         men_exit_phase = true;
 
         if(current_men_in_bath == 0 ) men_exit_phase = false;
