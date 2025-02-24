@@ -4,6 +4,8 @@
 #include <time.h>
 #include <stdbool.h>
 #include <sys/time.h>
+#include <limits.h>
+
 
 #define MAXNUMBEROFROUNDS 5
 
@@ -25,7 +27,7 @@ double read_timer() {
 
 int main(int argc, char *argv[])
 {
-	int numberOfRounds = (argc > 1) ? atoi(argv[1]) : MAXNUMBEROFROUNDS
+	int numberOfRounds = (argc > 1) ? atoi(argv[1]) : MAXNUMBEROFROUNDS;
 
     int rank;
     int size;
@@ -37,12 +39,52 @@ int main(int argc, char *argv[])
 
     double start_time;
     double end_time;
+    int tillf, min, max;
+    int totalTime = 0;
+    int buffer[size];
+    
+
     if (rank == STARTER) {
         start_time = read_timer();
     }
 
     for (int i = 0; i < numberOfRounds; i++) {
         /* Initialize seed and get the random number */
-        int v = rand() % 100;
+        int value = rand() % 100;
+        min = INT_MAX;
+        max = INT_MIN;
+    
+        MPI_Barrier(MPI_COMM_WORLD);
+        printf("thread number: %d\n value: %d\n\n",rank, value);
+
+        MPI_Gather(&value, 1, MPI_INT, &buffer[0], 1, MPI_INT, STARTER,MPI_COMM_WORLD);
+
+        if(rank == STARTER){
+            for(int j = 0; j<size; j++){
+                if(buffer[j] > max) max = buffer[j];
+                if(buffer[j] < min) min = buffer[j];
+            }
+            printf("Extreme values ->\n MIN: %d \n MAX \n", min, max); 
+
+            MPI_Bcast(&min, 1, MPI_INT, STARTER, MPI_COMM_WORLD);
+            MPI_Bcast(&max, 1, MPI_INT, STARTER, MPI_COMM_WORLD);
+
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        printf("thread number: %d -> min: %d",rank, min);
+        MPI_Barrier(MPI_COMM_WORLD);
+        printf("thread number: %d -> max: %d",rank, max);
+        if(rank == STARTER){
+            end_time = read_timer();
+        }
+
+        totalTime = totalTime + (end_time - start_time);
     }
+
+
+    MPI_Finalize();
+
+    int averageTime = totalTime/numberOfRounds;
+        
+    return 0;
 }
