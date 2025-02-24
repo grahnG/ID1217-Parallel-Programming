@@ -1,14 +1,14 @@
 import java.util.Random;
 
 public class Man implements Runnable {
-    private Random r = new Random();
-    private Bathroom bathroom;
-    private int numberOfVisits;
-    public int visits = 0;
-    public int id;
+    private Random r = new Random(); // Random delay generator
+    private Bathroom bathroom; // Shared bathroom object
+    private int numberOfVisits; // Max times this man will visit the bathroom
+    public int visits = 0; // Tracks how many times he's been to the bathroom
+    public int id; // Unique ID for each man
 
-    public Man(Bathroom bathroom, int numberOfVisits, int id) {
-        this.bathroom = bathroom;
+    public Man(Bathroom bathroom, int numberOfVisits, int id) { // COnstructor for assigning values
+        this.bathroom = bathroom; 
         this.numberOfVisits = numberOfVisits;
         this.id = id;
     }

@@ -9,9 +9,9 @@ public class Bathroom {
     private final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss:SSS");
 
     public synchronized void manEnter(Man man) throws InterruptedException {
-        waitingMen++;
+        waitingMen++; // A man is now waiting
         logEvent("Man " + man.id + " wants to enter.");
-        while (currentWomen > 0 || currentMen > 0) { // If women are inside wait
+        while (currentWomen > 0 || currentMen > 0) { // If anyone inside, he must wait
             wait();
         }
         waitingMen--;
