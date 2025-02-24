@@ -7,6 +7,8 @@
 
 #define MAXNUMBEROFROUNDS 5
 
+#define STARTER 0
+
 double read_timer() {
     static struct timeval start;
     static int initialized = 0;

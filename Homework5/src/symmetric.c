@@ -7,6 +7,8 @@
 
 #define MAXNUMBEROFROUNDS 5
 
+#define STARTER 0
+
 double read_timer() {
     static struct timeval start;
     static int initialized = 0;
@@ -23,7 +25,7 @@ double read_timer() {
 
 int main(int argc, char *argv[])
 {
-	int numberOfRounds = (argc > 1) ? atoi(argv[1]) : MAXNUMBEROFROUNDS
+	int numberOfRounds = (argc > 1) ? atoi(argv[1]) : MAXNUMBEROFROUNDS;
 
     int rank;
     int size;
