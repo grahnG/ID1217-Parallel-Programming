@@ -30,5 +30,10 @@ include_directories(include)
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${SOURCE_FOLDER}/*.${SOURCE_FILE_EXTENSION}")
 add_executable(${TARGET} ${SOURCES})
 
-target_link_libraries(${TARGET}
-)
+find_package(MPI REQUIRED)
+include_directories(${MPI_INCLUDE_PATH})
+
+target_link_libraries(${TARGET} ${MPI_C_LIBRARIES})
+
+target_compile_options(${TARGET} PRIVATE ${MPI_C_COMPILE_FLAGS})
+target_link_options(${TARGET} PRIVATE ${MPI_C_LINK_FLAGS})

@@ -11,7 +11,7 @@ all: compile
 compile: ${TARGET}
 
 run: ${TARGET}
-	@./${BUILD_FOLDER}/${TARGET} ${ARGUMENTS}
+	@mpiexec -n 4 ${BUILD_FOLDER}/${TARGET} ${ARGUMENTS}
 
 clean:
 	@rm -rf ${BUILD_FOLDER}
