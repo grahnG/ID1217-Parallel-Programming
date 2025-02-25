@@ -11,11 +11,11 @@ public class Bathroom {
     public synchronized void manEnter(Man man) throws InterruptedException {
         waitingMen++; // A man is now waiting
         logEvent("Man " + man.id + " wants to enter.");
-        while (currentWomen > 0 || currentMen > 0) { // If anyone inside, he must wait
+        while (currentWomen > 0) { // If anyone inside, he must wait
             wait();
         }
         waitingMen--;
-        currentMen = 1;
+        currentMen++;
         logEvent("Man " + man.id + " enters the bathroom. ");
     }
 
@@ -31,11 +31,11 @@ public class Bathroom {
     public synchronized void womanEnter(Woman woman) throws InterruptedException {
         waitingWomen++;
         logEvent("Woman " + woman.id + " wants to enter.");
-        while (currentMen > 0 || currentWomen > 0) {
+        while (currentMen > 0) {
             wait();
         }
         waitingWomen--;
-        currentWomen = 1;
+        currentWomen++;
         logEvent("Woman " + woman.id + " enters the bathroom.");
     }
 

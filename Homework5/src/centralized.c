@@ -5,15 +5,14 @@
 #include <stdbool.h>
 #include <sys/time.h>
 #include <limits.h>
-
-
-#define MAXNUMBEROFROUNDS 5
+#include <string.h>
 
 #define STARTER 0
 
+// Function to measure elapsed time
 double read_timer() {
+    static bool initialized = false;
     static struct timeval start;
-    static int initialized = 0;
     struct timeval end;
 
     if (!initialized) {
@@ -25,66 +24,86 @@ double read_timer() {
     return (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
 }
 
-int main(int argc, char *argv[])
-{
-	int numberOfRounds = (argc > 1) ? atoi(argv[1]) : MAXNUMBEROFROUNDS;
+int main(int argc, char *argv[]) {
+    int numberOfRounds = 3;
+    int silent_mode = 0;
 
-    int rank;
-    int size;
+    if (argc > 1) numberOfRounds = atoi(argv[1]);
+    if (argc > 2 && strcmp(argv[2], "--silent") == 0) silent_mode = 1;
+
+    int rank, size;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    srand(time(NULL) * rank);
+    srand(time(NULL) * rank);  // Seed random number generator
 
-    double start_time;
-    double end_time;
-    int tillf, min, max;
-    int totalTime = 0;
-    int buffer[size];
-    
-
+    double start_time, end_time;
     if (rank == STARTER) {
         start_time = read_timer();
     }
 
     for (int i = 0; i < numberOfRounds; i++) {
-        /* Initialize seed and get the random number */
-        int value = rand() % 100;
-        min = INT_MAX;
-        max = INT_MIN;
-    
-        MPI_Barrier(MPI_COMM_WORLD);
-        printf("thread number: %d\n value: %d\n\n",rank, value);
+        // Each process generates a random number
+        int my_value = rand() % 100;
 
-        MPI_Gather(&value, 1, MPI_INT, &buffer[0], 1, MPI_INT, STARTER,MPI_COMM_WORLD);
+        // Buffer to store collected values
+        int all_values[size];
+        int final_results[2]; // [0] -> max, [1] -> min
+        int min, max;
 
-        if(rank == STARTER){
-            for(int j = 0; j<size; j++){
-                if(buffer[j] > max) max = buffer[j];
-                if(buffer[j] < min) min = buffer[j];
+        MPI_Barrier(MPI_COMM_WORLD); // Ensure all processes start together
+
+        // Gather all values at STARTER process
+        MPI_Gather(&my_value, 1, MPI_INT, all_values, 1, MPI_INT, STARTER, MPI_COMM_WORLD);
+
+        if (rank == STARTER) {
+            max = INT_MIN;
+            min = INT_MAX;
+
+            // Find the maximum and minimum values
+            for (int j = 0; j < size; j++) {
+                if (all_values[j] > max) max = all_values[j];
+                if (all_values[j] < min) min = all_values[j];
             }
-            printf("Extreme values ->\n MIN: %d \n MAX \n", min, max); 
 
-            MPI_Bcast(&min, 1, MPI_INT, STARTER, MPI_COMM_WORLD);
-            MPI_Bcast(&max, 1, MPI_INT, STARTER, MPI_COMM_WORLD);
+            final_results[0] = max;
+            final_results[1] = min;
 
+            if (!silent_mode) {
+                printf("\n[STARTER] Round %d -> MIN: %d | MAX: %d\n", i + 1, min, max);
+            }
+
+            // Send results manually to each process
+            for (int j = 1; j < size; j++) {
+                MPI_Send(final_results, 2, MPI_INT, j, 0, MPI_COMM_WORLD);
+            }
+
+            // **STARTER prints results for all processes to ensure correct order**
+            if (!silent_mode) {
+            for (int p = 0; p < size; p++) {
+                printf("[Process %d] Round %d -> My value: %d | Max: %d | Min: %d\n",
+                       p, i + 1, all_values[p], max, min);
+            }
+          }
+        } else {
+            // Each process receives min/max from STARTER
+            MPI_Recv(final_results, 2, MPI_INT, STARTER, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
-        MPI_Barrier(MPI_COMM_WORLD);
-        printf("thread number: %d -> min: %d",rank, min);
-        MPI_Barrier(MPI_COMM_WORLD);
-        printf("thread number: %d -> max: %d",rank, max);
-        if(rank == STARTER){
-            end_time = read_timer();
-        }
 
-        totalTime = totalTime + (end_time - start_time);
+        MPI_Barrier(MPI_COMM_WORLD); // Ensure all processes received values before continuing
     }
 
+    if (rank == STARTER) {
+        end_time = read_timer();
+        if (!silent_mode) {
+            printf("\n%d rounds took %g seconds\n", numberOfRounds, end_time - start_time);
+        } else {
+            printf("%g\n", end_time - start_time);  // Only print execution time in silent mode
+        }
+    }
 
     MPI_Finalize();
-
-    int averageTime = totalTime/numberOfRounds;
-        
     return 0;
 }
+

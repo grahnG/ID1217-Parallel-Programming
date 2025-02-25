@@ -4,19 +4,20 @@
 #include <time.h>
 #include <stdbool.h>
 #include <sys/time.h>
-
-#define MAXNUMBEROFROUNDS 5
+#include <limits.h>
+#include <string.h>
 
 #define STARTER 0
 
+// Timer function
 double read_timer() {
+    static bool initialized = false;
     static struct timeval start;
-    static int initialized = 0;
     struct timeval end;
 
     if (!initialized) {
         gettimeofday(&start, NULL);
-        initialized = 1;
+        initialized = true;
     }
 
     gettimeofday(&end, NULL);
@@ -25,50 +26,61 @@ double read_timer() {
 
 int main(int argc, char *argv[])
 {
-	int numberOfRounds = (argc > 1) ? atoi(argv[1]) : MAXNUMBEROFROUNDS;
+    int numberOfRounds = 3;  
+    int silent_mode = 0;  
 
-    int rank;
-    int size;
+    if (argc > 1) numberOfRounds = atoi(argv[1]);
+    if (argc > 2 && strcmp(argv[2], "--silent") == 0) silent_mode = 1;
+
+    int rank, size;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     srand(time(NULL) * rank);
 
-    double start_time;
-    double end_time;
+    double start_time, end_time;
     if (rank == STARTER) {
         start_time = read_timer();
     }
 
     for (int i = 0; i < numberOfRounds; i++) {
-        /* Initialize seed and get the random number */
+        // Each process generates a random number
         int my_value = rand() % 100;
 
-        /* Array to store value from all processes */
+        // Array to store values from all processes
         int all_values[size];
 
-        /* Each process sends its value to all others and receive everyone's values */
-        MPI_Allgather(&my_value, 1, MPI_INT, &all_values[0], 1, MPI_INT, MPI_COMM_WORLD);
+        // Each process sends its value to all others and receives everyone's values
+        MPI_Allgather(&my_value, 1, MPI_INT, all_values, 1, MPI_INT, MPI_COMM_WORLD);
 
-        // Compute the minimum and maximum values from all collected values
+        // Each process computes min/max independently
         int min_value = my_value;
         int max_value = my_value;
 
-        for (int i = 0; i < size; i++) {
-            if (all_values[i] > max_value) max_value = all_values[i];
-            if (all_values[i] < min_value) min_value = all_values[i];
+        for (int j = 0; j < size; j++) {
+            if (all_values[j] > max_value) max_value = all_values[j];
+            if (all_values[j] < min_value) min_value = all_values[j];
         }
 
         // Print results for each process
-        printf("[Process %d] My value: %d | Max: %d | Min: %d\n", rank, my_value, max_value, min_value);
+        if (!silent_mode) {
+            printf("[Process %d] Round %d -> My value: %d | Max: %d | Min: %d\n",
+               rank, i + 1, my_value, max_value, min_value);
+            }
     }
 
-    if (rank == ROOT) {
+    if (rank == STARTER) {
         end_time = read_timer();
-        printf("%d rounds took %g seconds\n", numberOfRounds, end_time - start_time);
+
+        if (!silent_mode) {
+            printf("\n%d rounds took %g seconds\n", numberOfRounds, end_time - start_time);
+        } else {
+            printf("%g\n", end_time - start_time);  // Only print execution time in silent mode
+        }
     }
 
     MPI_Finalize();
     return 0;
 }
+
