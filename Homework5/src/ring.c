@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < numberOfRounds; i++) {
         int my_value = rand() % 100;
+        for (int k = 0; k < 1000; k++) { volatile int x = k; }
 
         int min_max_values[2]; // [0] -> max, [1] -> min
 

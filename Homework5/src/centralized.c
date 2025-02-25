@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < numberOfRounds; i++) {
         // Each process generates a random number
         int my_value = rand() % 100;
+        for (int k = 0; k < 1000; k++) { volatile int x = k; }
 
         // Buffer to store collected values
         int all_values[size];
